@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bank2budget</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #1a1a2e;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.25rem 2rem;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        main {
+            width: 100%;
+            max-width: 640px;
+            padding: 2rem 1rem;
+        }
+
+        /* Drop zone */
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            background: #fff;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .drop-zone-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .drop-zone p {
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+
+        .drop-zone .hint {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .drop-zone input[type="file"] {
+            display: none;
+        }
+
+        /* Status */
+        .status {
+            margin-top: 1.5rem;
+            display: none;
+        }
+
+        .status.visible {
+            display: block;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e2e8f0;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Result card */
+        .result {
+            margin-top: 1.5rem;
+            display: none;
+        }
+
+        .result.visible {
+            display: block;
+        }
+
+        .result-card {
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .result-header {
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .result-header.success {
+            background: #f0fdf4;
+            color: #166534;
+            border-bottom: 1px solid #bbf7d0;
+        }
+
+        .result-header.error {
+            background: #fef2f2;
+            color: #991b1b;
+            border-bottom: 1px solid #fecaca;
+        }
+
+        .result-body {
+            padding: 1.25rem;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .result-value {
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .result-message {
+            margin-top: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        .error-detail {
+            padding: 1rem 1.25rem;
+            font-size: 0.875rem;
+            color: #991b1b;
+            line-height: 1.5;
+        }
+
+        /* Upload another */
+        .upload-another {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .upload-another button {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            cursor: pointer;
+            font-size: 0.875rem;
+            text-decoration: underline;
+        }
+
+        .upload-another button:hover {
+            color: #2563eb;
+        }
+
+        /* Selected file name */
+        .file-name {
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
+            color: #334155;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>bank2budget</h1>
+    </header>
+
+    <main>
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">&#128196;</div>
+            <p>Drop your bank statement file here</p>
+            <p class="hint">ZIP (multiple CAMT.053 XMLs) or a single XML file</p>
+            <div class="file-name" id="fileName"></div>
+            <input type="file" id="fileInput" accept=".zip,.xml">
+        </div>
+
+        <div class="status" id="status">
+            <div class="loading">
+                <div class="spinner"></div>
+                <span>Processing...</span>
+            </div>
+        </div>
+
+        <div class="result" id="result">
+            <div class="result-card">
+                <div class="result-header" id="resultHeader"></div>
+                <div id="resultContent"></div>
+            </div>
+            <div class="upload-another">
+                <button onclick="reset()">Upload another file</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const dropZone = document.getElementById("dropZone");
+        const fileInput = document.getElementById("fileInput");
+        const fileNameEl = document.getElementById("fileName");
+        const statusEl = document.getElementById("status");
+        const resultEl = document.getElementById("result");
+        const resultHeader = document.getElementById("resultHeader");
+        const resultContent = document.getElementById("resultContent");
+
+        // Click to select
+        dropZone.addEventListener("click", () => fileInput.click());
+
+        // File selected via picker
+        fileInput.addEventListener("change", () => {
+            if (fileInput.files.length > 0) {
+                handleFile(fileInput.files[0]);
+            }
+        });
+
+        // Drag and drop
+        dropZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropZone.classList.add("drag-over");
+        });
+
+        dropZone.addEventListener("dragleave", () => {
+            dropZone.classList.remove("drag-over");
+        });
+
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZone.classList.remove("drag-over");
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            fileNameEl.textContent = file.name + " (" + formatBytes(file.size) + ")";
+
+            const isZip = file.name.toLowerCase().endsWith(".zip") ||
+                           file.type === "application/zip" ||
+                           file.type === "application/x-zip-compressed";
+            const isXml = file.name.toLowerCase().endsWith(".xml") ||
+                          file.type === "application/xml" ||
+                          file.type === "text/xml";
+
+            if (!isZip && !isXml) {
+                showError("Unsupported file type", "Please upload a ZIP or XML file.");
+                return;
+            }
+
+            const endpoint = isZip ? "/api/payments/upload" : "/api/payments/upload-xml";
+            upload(file, endpoint);
+        }
+
+        async function upload(file, endpoint) {
+            statusEl.classList.add("visible");
+            resultEl.classList.remove("visible");
+            dropZone.style.display = "none";
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess(data);
+                } else {
+                    showError(data.title || "Processing failed", data.detail || "An unexpected error occurred.");
+                }
+            } catch (err) {
+                showError("Connection error", "Could not reach the server. Please try again.");
+            } finally {
+                statusEl.classList.remove("visible");
+            }
+        }
+
+        function showSuccess(data) {
+            resultHeader.className = "result-header success";
+            resultHeader.innerHTML = "&#10003; Processing complete";
+
+            let html = '<div class="result-body">';
+            html += resultRow("Files processed", data.fileCount);
+            html += resultRow("Transactions found", data.transactionCount);
+            html += resultRow("Google Sheets", data.uploadedToGoogleSheets ? "Uploaded" : "Not configured");
+            html += "</div>";
+            html += '<div class="result-message">' + escapeHtml(data.message) + "</div>";
+
+            resultContent.innerHTML = html;
+            resultEl.classList.add("visible");
+        }
+
+        function showError(title, detail) {
+            statusEl.classList.remove("visible");
+            dropZone.style.display = "";
+
+            resultHeader.className = "result-header error";
+            resultHeader.innerHTML = "&#10007; " + escapeHtml(title);
+            resultContent.innerHTML = '<div class="error-detail">' + escapeHtml(detail) + "</div>";
+            resultEl.classList.add("visible");
+        }
+
+        function reset() {
+            fileInput.value = "";
+            fileNameEl.textContent = "";
+            resultEl.classList.remove("visible");
+            statusEl.classList.remove("visible");
+            dropZone.style.display = "";
+        }
+
+        function resultRow(label, value) {
+            return '<div class="result-row">' +
+                   '<span class="result-label">' + label + '</span>' +
+                   '<span class="result-value">' + escapeHtml(String(value)) + '</span>' +
+                   '</div>';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + " B";
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+            return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+        }
+    </script>
+</body>
+</html>

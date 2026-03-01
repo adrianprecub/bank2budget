@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.02">
+    <BkToCstmrStmt>
+        <GrpHdr>
+            <MsgId>MSG001</MsgId>
+            <CreDtTm>2024-01-15T10:30:00</CreDtTm>
+        </GrpHdr>
+        <Stmt>
+            <Id>STMT001</Id>
+            <CreDtTm>2024-01-15T10:30:00</CreDtTm>
+            <Acct>
+                <Id>
+                    <IBAN>DE89370400440532013000</IBAN>
+                </Id>
+            </Acct>
+            <Ntry>
+                <Amt Ccy="EUR">1500.00</Amt>
+                <CdtDbtInd>CRDT</CdtDbtInd>
+                <Sts>BOOK</Sts>
+                <BookgDt>
+                    <Dt>2024-01-15</Dt>
+                </BookgDt>
+                <ValDt>
+                    <Dt>2024-01-15</Dt>
+                </ValDt>
+                <AcctSvcrRef>REF001</AcctSvcrRef>
+                <NtryDtls>
+                    <TxDtls>
+                        <Refs>
+                            <EndToEndId>E2E001</EndToEndId>
+                        </Refs>
+                        <RltdPties>
+                            <Dbtr>
+                                <Nm>John Doe</Nm>
+                            </Dbtr>
+                        </RltdPties>
+                        <RmtInf>
+                            <Ustrd>Invoice payment 12345</Ustrd>
+                        </RmtInf>
+                    </TxDtls>
+                </NtryDtls>
+                <AddtlNtryInf>Monthly salary payment</AddtlNtryInf>
+            </Ntry>
+            <Ntry>
+                <Amt Ccy="EUR">250.75</Amt>
+                <CdtDbtInd>DBIT</CdtDbtInd>
+                <Sts>BOOK</Sts>
+                <BookgDt>
+                    <Dt>2024-01-16</Dt>
+                </BookgDt>
+                <ValDt>
+                    <Dt>2024-01-16</Dt>
+                </ValDt>
+                <AcctSvcrRef>REF002</AcctSvcrRef>
+                <NtryDtls>
+                    <TxDtls>
+                        <Refs>
+                            <EndToEndId>E2E002</EndToEndId>
+                        </Refs>
+                        <RltdPties>
+                            <Cdtr>
+                                <Nm>Electric Company</Nm>
+                            </Cdtr>
+                        </RltdPties>
+                        <RmtInf>
+                            <Ustrd>Electricity bill January</Ustrd>
+                        </RmtInf>
+                    </TxDtls>
+                </NtryDtls>
+                <AddtlNtryInf>Utility payment</AddtlNtryInf>
+            </Ntry>
+            <Ntry>
+                <Amt Ccy="USD">99.99</Amt>
+                <CdtDbtInd>DBIT</CdtDbtInd>
+                <Sts>PDNG</Sts>
+                <BookgDt>
+                    <Dt>2024-01-17</Dt>
+                </BookgDt>
+                <ValDt>
+                    <Dt>2024-01-18</Dt>
+                </ValDt>
+                <AddtlNtryInf>Online purchase</AddtlNtryInf>
+            </Ntry>
+        </Stmt>
+    </BkToCstmrStmt>
+</Document>

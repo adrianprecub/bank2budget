@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08">
+    <BkToCstmrStmt>
+        <GrpHdr>
+            <MsgId>MSG002</MsgId>
+            <CreDtTm>2024-02-01T08:00:00</CreDtTm>
+        </GrpHdr>
+        <Stmt>
+            <Id>STMT002</Id>
+            <CreDtTm>2024-02-01T08:00:00</CreDtTm>
+            <Acct>
+                <Id>
+                    <IBAN>DE89370400440532013000</IBAN>
+                </Id>
+            </Acct>
+            <Ntry>
+                <Amt Ccy="EUR">3200.00</Amt>
+                <CdtDbtInd>CRDT</CdtDbtInd>
+                <Sts>
+                    <Cd>BOOK</Cd>
+                </Sts>
+                <BookgDt>
+                    <Dt>2024-02-01</Dt>
+                </BookgDt>
+                <ValDt>
+                    <Dt>2024-02-01</Dt>
+                </ValDt>
+                <AcctSvcrRef>REF-V8-001</AcctSvcrRef>
+                <NtryDtls>
+                    <TxDtls>
+                        <Refs>
+                            <EndToEndId>E2E-V8-001</EndToEndId>
+                        </Refs>
+                        <RltdPties>
+                            <Dbtr>
+                                <Pty>
+                                    <Nm>Acme Corp</Nm>
+                                </Pty>
+                            </Dbtr>
+                        </RltdPties>
+                        <RmtInf>
+                            <Ustrd>Consulting fee February</Ustrd>
+                        </RmtInf>
+                    </TxDtls>
+                </NtryDtls>
+                <AddtlNtryInf>Professional services income</AddtlNtryInf>
+            </Ntry>
+        </Stmt>
+    </BkToCstmrStmt>
+</Document>
