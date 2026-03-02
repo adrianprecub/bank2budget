@@ -19,6 +19,7 @@
 
     <properties>
         <java.version>25</java.version>
+        <langchain4j.version>1.11.0</langchain4j.version>
     </properties>
 
     <dependencies>
@@ -27,6 +28,18 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- LangChain4j: provider-agnostic ChatModel abstraction -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        <!-- LangChain4j OpenAI integration (also works with any OpenAI-compatible endpoint) -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

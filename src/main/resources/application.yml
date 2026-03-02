@@ -17,6 +17,12 @@ app:
       # Set via OPENAI_API_KEY environment variable; leave empty to disable AI fallback
       api-key: ${OPENAI_API_KEY:}
       model: gpt-4o-mini
+      # Optional: override the base URL to use any OpenAI-compatible provider.
+      # Examples:
+      #   Ollama:    http://localhost:11434/v1
+      #   Mistral:   https://api.mistral.ai/v1
+      #   LM Studio: http://localhost:1234/v1
+      # base-url: http://localhost:11434/v1
 
     # Keyword-to-category rules. Case-insensitive, matched against details + counterparty + remittance.
     # First match wins. Add/remove keywords as needed — no code changes required.

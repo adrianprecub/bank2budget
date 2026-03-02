@@ -1,53 +1,50 @@
 package com.bank2budget.service;
 
-import com.bank2budget.config.CategorizationProperties;
 import com.bank2budget.model.Transaction;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.DisabledChatModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Fallback categorization using the OpenAI Chat Completions API.
+ * Fallback categorization using a LangChain4j {@link ChatModel}.
  * <p>
- * Sends uncategorized transactions as a batch to GPT and parses
- * the response — one category per line, in the same order as input.
+ * The model implementation is injected via Spring and configured in {@code AiConfig}.
+ * By default it uses OpenAI, but any OpenAI-compatible provider (Ollama, Mistral, etc.)
+ * can be used by setting {@code app.categorization.ai.base-url} in application.yml.
  * <p>
- * Configured via {@code app.categorization.ai.api-key} and {@code app.categorization.ai.model}.
- * If the API key is not set, this service is a no-op.
+ * If no API key is set, {@link DisabledChatModel} is injected and this service is a no-op.
  */
 @Service
 public class AiCategorizationService {
 
     private static final Logger log = LoggerFactory.getLogger(AiCategorizationService.class);
-    private static final String OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
     /** Maximum transactions to send in a single AI request (to stay within token limits). */
     private static final int MAX_BATCH_SIZE = 50;
 
-    private final CategorizationProperties.Ai aiConfig;
-    private final RestClient restClient;
+    private final ChatModel chatModel;
 
-    public AiCategorizationService(CategorizationProperties properties) {
-        this.aiConfig = properties.ai();
-        this.restClient = RestClient.builder().build();
+    public AiCategorizationService(ChatModel chatModel) {
+        this.chatModel = chatModel;
     }
 
     public boolean isConfigured() {
-        return aiConfig.isConfigured();
+        return !(chatModel instanceof DisabledChatModel);
     }
 
     /**
-     * Categorizes transactions using OpenAI. Returns a list of category strings
-     * in the same order as input. Unknown/unclassifiable transactions get empty string.
+     * Categorizes transactions using the configured AI model. Returns a list of category strings
+     * in the same order as input. Unknown/unclassifiable transactions get an empty string.
      *
-     * @param transactions   list of uncategorized transactions
-     * @param categoryNames  all known category names (for the AI prompt)
+     * @param transactions  list of uncategorized transactions
+     * @param categoryNames all known category names (for the AI prompt)
      */
     public List<String> categorize(List<Transaction> transactions, List<String> categoryNames) {
         if (!isConfigured() || transactions.isEmpty()) {
@@ -68,29 +65,15 @@ public class AiCategorizationService {
     }
 
     private List<String> categorizeBatch(List<Transaction> batch, List<String> categoryNames) {
-        String systemPrompt = buildSystemPrompt(categoryNames);
-        String userPrompt = buildUserPrompt(batch);
-
         try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> response = restClient.post()
-                    .uri(OPENAI_URL)
-                    .header("Authorization", "Bearer " + aiConfig.apiKey())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of(
-                            "model", aiConfig.model(),
-                            "temperature", 0.0,
-                            "messages", List.of(
-                                    Map.of("role", "system", "content", systemPrompt),
-                                    Map.of("role", "user", "content", userPrompt)
-                            )
-                    ))
-                    .retrieve()
-                    .body(Map.class);
+            String response = chatModel.chat(
+                    SystemMessage.from(buildSystemPrompt(categoryNames)),
+                    UserMessage.from(buildUserPrompt(batch))
+            ).aiMessage().text();
 
             return parseResponse(response, batch.size());
         } catch (Exception e) {
-            log.error("OpenAI API call failed: {}", e.getMessage());
+            log.error("AI categorization request failed: {}", e.getMessage());
             return batch.stream().map(_ -> "").toList();
         }
     }
@@ -124,23 +107,13 @@ public class AiCategorizationService {
         return sb.toString();
     }
 
-    @SuppressWarnings("unchecked")
-    private List<String> parseResponse(Map<String, Object> response, int expectedCount) {
-        if (response == null) {
+    private List<String> parseResponse(String response, int expectedCount) {
+        if (response == null || response.isBlank()) {
             return new ArrayList<>(java.util.Collections.nCopies(expectedCount, ""));
         }
 
         try {
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
-            if (choices == null || choices.isEmpty()) {
-                log.warn("OpenAI response has no choices");
-                return new ArrayList<>(java.util.Collections.nCopies(expectedCount, ""));
-            }
-
-            Map<String, Object> message = (Map<String, Object>) choices.getFirst().get("message");
-            String content = (String) message.get("content");
-
-            String[] lines = content.strip().split("\\n");
+            String[] lines = response.strip().split("\\n");
             List<String> categories = new ArrayList<>(expectedCount);
             for (int i = 0; i < expectedCount; i++) {
                 if (i < lines.length) {
@@ -153,7 +126,7 @@ public class AiCategorizationService {
             }
             return categories;
         } catch (Exception e) {
-            log.error("Failed to parse OpenAI response: {}", e.getMessage());
+            log.error("Failed to parse AI response: {}", e.getMessage());
             return new ArrayList<>(java.util.Collections.nCopies(expectedCount, ""));
         }
     }

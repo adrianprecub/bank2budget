@@ -2,6 +2,7 @@ package com.bank2budget.service;
 
 import com.bank2budget.config.CategorizationProperties;
 import com.bank2budget.model.Transaction;
+import dev.langchain4j.model.chat.DisabledChatModel;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -16,8 +17,8 @@ class TransactionCategorizationServiceTest {
 
     /** Build a service with the given keyword rules and no AI fallback. */
     private TransactionCategorizationService serviceWithRules(Map<String, List<String>> rules) {
-        var props = new CategorizationProperties(rules, new CategorizationProperties.Ai(null, null));
-        var aiService = new AiCategorizationService(props);
+        var props = new CategorizationProperties(rules, new CategorizationProperties.Ai(null, null, null));
+        var aiService = new AiCategorizationService(new DisabledChatModel());
         return new TransactionCategorizationService(props, aiService);
     }
 
